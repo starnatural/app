@@ -1,1 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Star Natural</title>
 
+  <!-- Vinculación del Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2e7d32">
+
+  <style>
+    /* Estilo para el banner de instalación */
+    #banner-instalacion {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #2e7d32;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+      text-align: center;
+    }
+
+    #btn-instalar {
+      background-color: #ffffff;
+      color: #2e7d32;
+      border: none;
+      padding: 8px 16px;
+      margin-left: 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Banner de aviso -->
+  <div id="banner-instalacion">
+    <span>¿Quieres instalar esta App en tu móvil?</span>
+    <button id="btn-instalar">Instalar</button>
+  </div>
+
+<script>
+  // Registrar Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+
+  let deferredPrompt;
+  const banner = document.getElementById('banner-instalacion');
+  const btnInstalar = document.getElementById('btn-instalar');
+  const textoBanner = document.getElementById('texto-banner');
+
+  // Detectar si es Firefox
+  const esFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+
+  if (esFirefox) {
+    // Para Firefox mostramos un mensaje instructivo directo
+    if (banner && textoBanner) {
+      textoBanner.innerText = "Para instalar la App, toca el menú (⋮) de Firefox y elige 'Instalar'";
+      btnInstalar.style.display = 'none'; // Ocultamos el botón porque Firefox no permite clic directo
+      banner.style.display = 'block';
+    }
+  }
+
+  // Capturar evento para Chrome / Edge
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (banner) {
+      banner.style.display = 'block';
+    }
+  });
+
+  if (btnInstalar) {
+    btnInstalar.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`Resultado: ${outcome}`);
+        deferredPrompt = null;
+        banner.style.display = 'none';
+      }
+    });
+  }
+</script>
+</body>
+</html>
